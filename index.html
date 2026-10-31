@@ -39,7 +39,7 @@
 </head>
 <body>
 <main class="the">
-  <h1>Tra cứu nhóm đào tạo</h1>
+  <h1>Tra cứu nhóm đào tạo<br>HIỂU TÀI CHÍNH CÁ NHÂN</h1>
   <input id="ma" type="text" placeholder="Nhập mã user (VD: TOANBX)" autocomplete="off" autocapitalize="characters" autofocus>
   <button class="nut" id="btn">Tra cứu</button>
   <div id="kq" aria-live="polite"></div>
@@ -160,7 +160,7 @@
   });
 
   // Khu quản trị chỉ hiện khi mở link có đuôi này. Đổi đoạn sau dấu # thành chuỗi của riêng bạn.
-  var DUOI_QUAN_TRI = '#quantri-k9x2';
+  var DUOI_QUAN_TRI = '#admin';
   function kiemTraQuanTri() {
     var ok = location.hash === DUOI_QUAN_TRI;
     $('qt').classList.toggle('hien', ok);
