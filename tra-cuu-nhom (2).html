@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tra cứu nhóm đào tạo</title>
+<style>
+  :root { --nen:#eef3f8; --the:#fff; --chu:#1d2733; --phu:#5b6b7c; --xanh:#00529b; --do:#d32f2f; --vien:#cfd9e4; --loi:#b71c1c; }
+  @media (prefers-color-scheme: dark) {
+    :root { --nen:#10171f; --the:#18222d; --chu:#e8eef4; --phu:#9fb0c1; --xanh:#6db3f2; --do:#ff6b6b; --vien:#2b3a4a; --loi:#ff8a80; }
+  }
+  * { box-sizing:border-box; }
+  html,body { margin:0; height:100%; }
+  body { font-family:"Segoe UI",Roboto,Arial,sans-serif; background:var(--nen); color:var(--chu);
+         display:flex; justify-content:center; align-items:center; padding:16px; }
+  .the { background:var(--the); width:100%; max-width:420px; padding:32px 28px; border-radius:14px;
+         border:1px solid var(--vien); text-align:center; }
+  h1 { margin:0 0 20px; font-size:22px; color:var(--xanh); }
+  input[type=text] { width:100%; padding:13px 14px; font-size:17px; border:1px solid var(--vien); border-radius:8px;
+         background:transparent; color:var(--chu); text-transform:uppercase; }
+  input:focus-visible, button:focus-visible { outline:3px solid var(--xanh); outline-offset:2px; }
+  .nut { margin-top:12px; width:100%; padding:13px; font-size:16px; background:var(--xanh); color:#fff;
+         border:0; border-radius:8px; cursor:pointer; }
+  @media (prefers-color-scheme: dark) { .nut { color:#08121c; } }
+  .nut.phu { background:transparent; color:var(--xanh); border:1px solid var(--vien); margin-top:8px; }
+  #kq { margin-top:24px; min-height:30px; }
+  .tt { font-size:16px; margin:6px 0; color:var(--chu); }
+  .tt span { color:var(--phu); }
+  .nhom { font-size:44px; font-weight:800; color:var(--do); margin-top:14px; line-height:1.1; }
+  .loi { color:var(--loi); font-size:16px; }
+  .qt { display:none; margin-top:26px; border-top:1px solid var(--vien); padding-top:14px; font-size:13px; color:var(--phu); }
+  .qt.hien { display:block; }
+  .qt a { color:var(--xanh); cursor:pointer; text-decoration:underline; }
+  #admin { display:none; text-align:left; margin-top:14px; font-size:14px; }
+  #admin.mo { display:block; }
+  #admin p { margin:6px 0; color:var(--phu); }
+  #admin input[type=file] { width:100%; margin-top:6px; color:var(--chu); }
+</style>
+</head>
+<body>
+<main class="the">
+  <h1>Tra cứu nhóm đào tạo</h1>
+  <input id="ma" type="text" placeholder="Nhập mã user (VD: TOANBX)" autocomplete="off" autocapitalize="characters" autofocus>
+  <button class="nut" id="btn">Tra cứu</button>
+  <div id="kq" aria-live="polite"></div>
+
+  <div class="qt" id="qt">
+    <span id="soluong"></span> · <a id="mo">Cập nhật danh sách</a>
+    <div id="admin">
+      <p>Chọn file Excel (.xlsx) gồm 4 cột: Mã user, Họ và tên, Phòng, Nhóm. Dòng 1 là tiêu đề.</p>
+      <input type="file" id="file" accept=".xlsx,.xls,.csv">
+      <p id="tb"></p>
+      <button class="nut phu" id="tai" style="display:none">Tải data.js</button>
+    </div>
+  </div>
+</main>
+
+<!-- Dữ liệu đọc từ data.js (đặt cùng thư mục). Nhập Excel xong, bấm "Tải data.js" rồi thay file này trên web. -->
+<script src="data.js"></script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script>
+(function () {
+  var KHOA = 'tracuu_nhom_dulieu';
+  var $ = function (id) { return document.getElementById(id); };
+  var macDinh = Array.isArray(window.DU_LIEU) ? window.DU_LIEU : [];
+
+  var ds = macDinh;
+  try {
+    var luu = JSON.parse(localStorage.getItem(KHOA) || 'null');
+    if (luu && luu.length && !macDinh.length) ds = luu;
+  } catch (e) {}
+
+  var chuan = function (s) { return String(s == null ? '' : s).trim().toUpperCase(); };
+  var thoatHtml = function (s) {
+    return String(s).replace(/[&<>"']/g, function (c) {
+      return { '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c];
+    });
+  };
+  var boDau = function (s) {
+    return String(s).normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/đ/gi, 'd').toLowerCase().replace(/[^a-z]/g, '');
+  };
+
+  function lap() {
+    var map = {};
+    ds.forEach(function (r) { map[chuan(r.ma)] = r; });
+    return map;
+  }
+  var chiMuc = lap();
+
+  function capNhatSL() {
+    $('soluong').textContent = ds.length ? 'Có ' + ds.length + ' người trong danh sách' : 'Chưa có dữ liệu';
+  }
+
+  function tra() {
+    var ma = chuan($('ma').value);
+    var kq = $('kq');
+    if (!ma) { kq.innerHTML = '<div class="loi">Vui lòng nhập mã user.</div>'; return; }
+    if (!ds.length) { kq.innerHTML = '<div class="loi">Chưa có dữ liệu. Kiểm tra file data.js hoặc bấm "Cập nhật danh sách" để nhập file Excel.</div>'; return; }
+    var r = chiMuc[ma];
+    if (!r) { kq.innerHTML = '<div class="loi">Không tìm thấy mã user "' + thoatHtml(ma) + '".</div>'; return; }
+    kq.innerHTML =
+      '<div class="tt"><span>Họ và tên:</span> <b>' + thoatHtml(r.ten) + '</b></div>' +
+      '<div class="tt"><span>Phòng:</span> <b>' + thoatHtml(r.phong) + '</b></div>' +
+      '<div class="nhom">' + thoatHtml(r.nhom) + '</div>';
+  }
+
+  $('btn').addEventListener('click', tra);
+  $('ma').addEventListener('keydown', function (e) { if (e.key === 'Enter') tra(); });
+  $('mo').addEventListener('click', function () { $('admin').classList.toggle('mo'); });
+
+  function docFile(f) {
+    var tb = $('tb');
+    if (typeof XLSX === 'undefined') { tb.textContent = 'Chưa tải được thư viện đọc Excel. Kiểm tra kết nối mạng rồi tải lại trang.'; return; }
+    var rd = new FileReader();
+    rd.onload = function (e) {
+      try {
+        var wb = XLSX.read(e.target.result, { type: 'array' });
+        var rows = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { header: 1, defval: '', raw: false });
+        if (rows.length < 2) { tb.textContent = 'File không có dữ liệu.'; return; }
+
+        var vt = { ma: 0, ten: 1, phong: 2, nhom: 3 };
+        rows[0].forEach(function (h, i) {
+          var k = boDau(h);
+          if (k === 'mauser' || k === 'ma' || k === 'user') vt.ma = i;
+          else if (k.indexOf('hovaten') === 0 || k === 'hoten' || k === 'ten') vt.ten = i;
+          else if (k.indexOf('phong') === 0) vt.phong = i;
+          else if (k.indexOf('nhom') === 0) vt.nhom = i;
+        });
+
+        var moi = [];
+        for (var i = 1; i < rows.length; i++) {
+          var ma = String(rows[i][vt.ma]).trim();
+          if (!ma) continue;
+          moi.push({ ma: ma, ten: String(rows[i][vt.ten]).trim(), phong: String(rows[i][vt.phong]).trim(), nhom: String(rows[i][vt.nhom]).trim() });
+        }
+        if (!moi.length) { tb.textContent = 'Không đọc được dòng dữ liệu nào. Kiểm tra lại cột Mã user.'; return; }
+
+        ds = moi; chiMuc = lap(); capNhatSL();
+        try { localStorage.setItem(KHOA, JSON.stringify(ds)); } catch (er) {}
+        tb.textContent = 'Đã nhập ' + moi.length + ' dòng. Để mọi người cùng dùng, bấm nút bên dưới rồi thay file data.js trên web.';
+        $('tai').style.display = 'block';
+        $('kq').innerHTML = '';
+      } catch (err) {
+        tb.textContent = 'Lỗi đọc file: ' + err.message;
+      }
+    };
+    rd.readAsArrayBuffer(f);
+  }
+  $('file').addEventListener('change', function () { if (this.files[0]) docFile(this.files[0]); });
+
+  $('tai').addEventListener('click', function () {
+    var js = '// Xuất ngày ' + new Date().toLocaleString('vi-VN') + ' - ' + ds.length + ' dòng\n' +
+             'window.DU_LIEU = ' + JSON.stringify(ds, null, 1) + ';\n';
+    var a = document.createElement('a');
+    a.href = URL.createObjectURL(new Blob([js], { type: 'text/javascript;charset=utf-8' }));
+    a.download = 'data.js';
+    a.click();
+    setTimeout(function () { URL.revokeObjectURL(a.href); }, 2000);
+  });
+
+  // Khu quản trị chỉ hiện khi mở link có đuôi này. Đổi đoạn sau dấu # thành chuỗi của riêng bạn.
+  var DUOI_QUAN_TRI = '#quantri-k9x2';
+  function kiemTraQuanTri() {
+    var ok = location.hash === DUOI_QUAN_TRI;
+    $('qt').classList.toggle('hien', ok);
+    if (ok) $('admin').classList.add('mo');
+  }
+  window.addEventListener('hashchange', kiemTraQuanTri);
+  kiemTraQuanTri();
+
+  capNhatSL();
+})();
+</script>
+</body>
+</html>
