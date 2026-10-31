@@ -81,7 +81,7 @@
   <img id="anhsodo" src="https://raw.githubusercontent.com/vtb600/dsnhom/main/sodo.png" alt="Sơ đồ vị trí" loading="lazy">
   <figcaption>Chạm vào hình để phóng to</figcaption>
 </figure>
-<div id="phong"><img src="so-do.png" alt="Sơ đồ vị trí (phóng to)"></div>
+<div id="phong"><img src="sodo.png" alt="Sơ đồ vị trí (phóng to)"></div>
 <button id="dong" aria-label="Đóng">&times;</button>
 
 <!-- Dữ liệu đọc từ data.js (đặt cùng thư mục). Nhập Excel xong, bấm "Tải data.js" rồi thay file này trên web. -->
@@ -209,7 +209,7 @@
   document.addEventListener('keydown', function (e) { if (e.key === 'Escape') bat(false); });
 
   // Khu quản trị chỉ hiện khi mở link có đuôi này. Đổi đoạn sau dấu # thành chuỗi của riêng bạn.
-  var DUOI_QUAN_TRI = '#quantri-k9x2';
+  var DUOI_QUAN_TRI = 'admin';
   function kiemTraQuanTri() {
     var ok = location.hash === DUOI_QUAN_TRI;
     $('qt').classList.toggle('hien', ok);
