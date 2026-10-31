@@ -160,7 +160,7 @@
   });
 
   // Khu quản trị chỉ hiện khi mở link có đuôi này. Đổi đoạn sau dấu # thành chuỗi của riêng bạn.
-  var DUOI_QUAN_TRI = '#admin';
+  var DUOI_QUAN_TRI = 'admin';
   function kiemTraQuanTri() {
     var ok = location.hash === DUOI_QUAN_TRI;
     $('qt').classList.toggle('hien', ok);
